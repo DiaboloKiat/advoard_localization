@@ -8,7 +8,7 @@ __email__ = "bekirbostanci@gmail.com"
 '''
 
 import rospy
-from ieu_agv.msg import  uwb_data
+from pozyx_simulation.msg import  uwb_data
 from geometry_msgs.msg import Pose
 
 import tf
@@ -26,11 +26,8 @@ all_destination_id = []
 pose_x = 0 
 pose_y = 0
 
-global sensor_pos
+#get uwb anchors postion
 sensor_pos = []
-
-
-
 
 rospy.init_node('localization_data_node', anonymous=True)
 pub = rospy.Publisher('localization_data_topic', Pose, queue_size=10)
@@ -59,7 +56,8 @@ def publish_data(pose_x,pose_y):
     
 #added => cagdas tekok 
 def position_calculation(sensor_pos,dist): 
-    A=(-2*sensor_pos).transpose()
+    print(sensor_pos)
+    A = (-2*sensor_pos).transpose()
     vertical=len(sensor_pos[0])
     horizontal=len(sensor_pos)
     B=np.ones([horizontal,1],dtype=float).transpose()
@@ -111,9 +109,9 @@ def get_anchors_pos():
             (trans,rot) = listener.lookupTransform('/map', uwb_id+str(i), rospy.Time(0))
             sensor_pos.append(trans)
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+            if(i == 0):
+                rospy.INFO("Firstly have to run pozyx_simulation package uwb_simulation.py file")
             break
-
-
 
     if sensor_pos == [] :
         rospy.logwarn("There is not found any anchors. Function is working again.")    
@@ -124,8 +122,7 @@ def get_anchors_pos():
 
 
 if __name__ == "__main__":
-    #get uwb anchors postion
-    global sensor_pos
+    # get uwb anchors postion
     sensor_pos = get_anchors_pos()
 
     rospy.Subscriber('uwb_data_topic', uwb_data, subscribe_data)
